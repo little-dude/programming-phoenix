@@ -7,8 +7,20 @@ defmodule RumblWeb.Auth do
 
   def call(conn, _opts) do
     user_id = get_session(conn, :user_id)
-    user = user_id && Rumbl.Accounts.get_user(user_id)
-    assign(conn, :current_user, user)
+
+    cond do
+      # By-pass mechanism: in tests we assign a user to the connection
+      conn.assigns[:current_user] ->
+        conn
+
+      # If the session contains a user id and the corresponding user
+      # exists, populate the connection with that user
+      user = user_id && Rumbl.Accounts.get_user(user_id) ->
+        assign(conn, :current_user, user)
+
+      true ->
+        assign(conn, :current_user, nil)
+    end
   end
 
   def login(conn, user) do
